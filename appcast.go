@@ -44,6 +44,18 @@ func ParseContent(text []byte) (*Channel, error) {
     return &rss.Channel, nil
 }
 
+func WriteFile(path string, channel * Channel) (error) {
+    content, err := xml.Marshal(channel)
+    if err != nil {
+        return err
+    }
+	err = ioutil.WriteFile(path, content, 0666)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func ReadFile(file string) (*Channel, error) {
     text, err := ioutil.ReadFile(file)
     if err != nil {
@@ -64,4 +76,5 @@ func ReadUrl(url string) (*Channel, error) {
     }
     return ParseContent(text)
 }
+
 

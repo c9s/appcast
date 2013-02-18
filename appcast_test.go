@@ -32,6 +32,12 @@ func TestRSSXML(t *testing.T) {
 			t.Errorf("Enclosure DSASignature not found.")
 		}
 	}
+
+	err = WriteFile("tests/appcast-out.xml", channel)
+	if err != nil {
+		t.Error("Can not write xml file.")
+	}
+
 	_ = channel
 	_ = err
 }
