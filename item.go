@@ -12,3 +12,12 @@ type Item struct {
     Content     string        `xml:"content"`
 	ReleaseNotesLink string	  `xml:"releaseNotesLink"`
 }
+
+func (item * Item) SetEnclosure(enclosure * ItemEnclosure) {
+	item.Enclosure = *enclosure
+}
+
+func (item * Item) AddCategory(category string) {
+	item.Category = append(item.Category, category)
+}
+

@@ -25,7 +25,7 @@ func TestRSSXML(t *testing.T) {
 		if len(item.Enclosure.Version) == 0 {
 			t.Errorf("Enclosure version not found.")
 		}
-		if len(item.Enclosure.Length) == 0 {
+		if item.Enclosure.Length == 0 {
 			t.Errorf("Enclosure length not found.")
 		}
 		if len(item.Enclosure.DSASignature) == 0 {
