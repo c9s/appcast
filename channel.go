@@ -8,3 +8,8 @@ type Channel struct {
     LastBuildDate Date   `xml:"lastBuildDate"`
     Item          []Item `xml:"item"`
 }
+
+func (channel * Channel) AddItem( item * Item ) {
+	channel.Item = append(channel.Item, *item)
+}
+
