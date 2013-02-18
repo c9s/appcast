@@ -93,3 +93,4 @@ func ReadUrl(url string) (*Channel, error) {
 	}
 	return ParseContent(text)
 }
+
