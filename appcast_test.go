@@ -1,5 +1,4 @@
-package rss
-
+package appcast
 import "testing"
 
 func TestRSSXML(t *testing.T) {
@@ -13,12 +12,24 @@ func TestRSSXML(t *testing.T) {
 	}
 
 	if len(channel.Item) == 0 {
-		t.Errorf("Item length is zero")
+		t.Errorf("Item length is zero.")
 	}
 
 	for _ , item := range channel.Item {
 		if len(item.Title) == 0 {
-			t.Errorf("Item Title is empty")
+			t.Errorf("Item Title is empty.")
+		}
+		if len(item.ReleaseNotesLink) == 0 {
+			t.Errorf("Item ReleaseNotesLink is empty")
+		}
+		if len(item.Enclosure.Version) == 0 {
+			t.Errorf("Enclosure version not found.")
+		}
+		if len(item.Enclosure.Length) == 0 {
+			t.Errorf("Enclosure length not found.")
+		}
+		if len(item.Enclosure.DSASignature) == 0 {
+			t.Errorf("Enclosure DSASignature not found.")
 		}
 	}
 	_ = channel

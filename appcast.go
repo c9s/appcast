@@ -20,8 +20,12 @@ type Channel struct {
 }
 
 type ItemEnclosure struct {
-    URL  string `xml:"url,attr"`
-    Type string `xml:"type,attr"`
+    URL					string `xml:"url,attr"`
+    Type				string `xml:"type,attr"`
+    Length				string `xml:"length,attr"`
+    Version				string `xml:"version,attr"`
+    VersionShortString  string `xml:"versionShortString,attr"`
+	DSASignature		string `xml:"dsaSignature,attr"`
 }
 
 type Item struct {
@@ -34,8 +38,7 @@ type Item struct {
     Enclosure   ItemEnclosure `xml:"enclosure"`
     Description string        `xml:"description"`
     Content     string        `xml:"content"`
-    Version     string        `xml:"sparkle:version"`
-    Version     string        `xml:"sparkle:version"`
+	ReleaseNotesLink string		  `xml:"releaseNotesLink"`
 }
 
 type Date string
