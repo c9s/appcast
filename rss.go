@@ -62,25 +62,34 @@ func (self Date) MustFormat(format string) string {
 	return s
 }
 
-func Read(url string) (*Channel, error) {
+func ParseContent(text []byte) (*Channel, error) {
+	var rss struct {
+		Channel Channel `xml:"channel"`
+	}
+	err := xml.Unmarshal(text, &rss)
+	if err != nil {
+		return nil, err
+	}
+	return &rss.Channel, nil
+}
+
+func ReadFile(file string) (*Channel, error) {
+	text, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return ParseContent(text)
+}
+
+func ReadUrl(url string) (*Channel, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-
 	defer response.Body.Close()
 	text, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
 	}
-
-	var rss struct {
-		Channel Channel `xml:"channel"`
-	}
-	err = xml.Unmarshal(text, &rss)
-	if err != nil {
-		return nil, err
-	}
-
-	return &rss.Channel, nil
+	return ParseContent(text)
 }
