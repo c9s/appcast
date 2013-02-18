@@ -39,6 +39,5 @@ func TestRSSXML(t *testing.T) {
 	}
 
 	_ = channel
-	_ = err
 }
 

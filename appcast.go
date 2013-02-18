@@ -34,9 +34,7 @@ func (self Date) MustFormat(format string) string {
 }
 
 func ParseContent(text []byte) (*Channel, error) {
-    var rss struct {
-        Channel Channel `xml:"channel"`
-    }
+    var rss = rss{}
     err := xml.Unmarshal(text, &rss)
     if err != nil {
         return nil, err
@@ -45,7 +43,11 @@ func ParseContent(text []byte) (*Channel, error) {
 }
 
 func WriteFile(path string, channel * Channel) (error) {
-    content, err := xml.Marshal(channel)
+    var rss = rss{}
+	rss.Channel = *channel
+	rss.Version = "2.0"
+
+    content, err := xml.Marshal(rss)
     if err != nil {
         return err
     }
