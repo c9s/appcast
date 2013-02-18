@@ -6,10 +6,10 @@ type Channel struct {
     Description   string `xml:"description"`
     Language      string `xml:"language"`
     LastBuildDate Date   `xml:"lastBuildDate"`
-    Item          []Item `xml:"item"`
+    Item          []SparkleItem `xml:"item"`
 }
 
-func (channel * Channel) AddItem( item * Item ) {
+func (channel * Channel) AddItem( item * SparkleItem ) {
 	channel.Item = append(channel.Item, *item)
 }
 

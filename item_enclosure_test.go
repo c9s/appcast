@@ -1,5 +1,5 @@
 package appcast
-
+// import "encoding/xml"
 import "testing"
 
 func TestItemEnclosure(t * testing.T) {
@@ -10,5 +10,12 @@ func TestItemEnclosure(t * testing.T) {
 	if enclosure == nil {
 		t.Error("Enclosure is empty")
 	}
+
+// 	a := map[string] string {
+// 		"sparkle:version":"220",
+// 	}
+// 	_ = a
+
+
 }
 

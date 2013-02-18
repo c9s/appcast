@@ -10,7 +10,11 @@ type Item struct {
     Enclosure   ItemEnclosure `xml:"enclosure"`
     Description string        `xml:"description"`
     Content     string        `xml:"content"`
-	ReleaseNotesLink string	  `xml:"releaseNotesLink"`
+}
+
+type SparkleItem struct {
+	Item
+	SparkleReleaseNotesLink string `xml:"sparkle:releaseNotesLink"`
 }
 
 func (item * Item) SetEnclosure(enclosure * ItemEnclosure) {

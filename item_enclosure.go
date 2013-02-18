@@ -6,9 +6,9 @@ type ItemEnclosure struct {
     URL					string `xml:"url,attr"`
     Type				string `xml:"type,attr"`
     Length				int64 `xml:"length,attr"`
-    Version				string `xml:"version,attr"`
-    VersionShortString  string `xml:"versionShortString,attr"`
-	DSASignature		string `xml:"dsaSignature,attr"`
+    SparkleVersion				string `xml:"version,attr"`
+    SparkleVersionShortString  string `xml:"versionShortString,attr"`
+	SparkleDSASignature		string `xml:"dsaSignature,attr"`
 }
 
 // Return ItemEnclosure object with Type, Length

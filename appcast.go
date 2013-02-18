@@ -46,6 +46,8 @@ func WriteFile(path string, channel * Channel) (error) {
     var rss = rss{}
 	rss.Channel = *channel
 	rss.Version = "2.0"
+	rss.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
+	rss.XmlNSDC = "http://purl.org/dc/elements/1.1/"
 
     content, err := xml.Marshal(rss)
     if err != nil {
