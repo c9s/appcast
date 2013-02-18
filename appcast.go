@@ -1,6 +1,3 @@
-/*
-Simple RSS parser, tested with Wordpress feeds.
-*/
 package appcast
 
 import (
@@ -9,37 +6,6 @@ import (
     "net/http"
     "time"
 )
-
-type Channel struct {
-    Title         string `xml:"title"`
-    Link          string `xml:"link"`
-    Description   string `xml:"description"`
-    Language      string `xml:"language"`
-    LastBuildDate Date   `xml:"lastBuildDate"`
-    Item          []Item `xml:"item"`
-}
-
-type ItemEnclosure struct {
-    URL					string `xml:"url,attr"`
-    Type				string `xml:"type,attr"`
-    Length				string `xml:"length,attr"`
-    Version				string `xml:"version,attr"`
-    VersionShortString  string `xml:"versionShortString,attr"`
-	DSASignature		string `xml:"dsaSignature,attr"`
-}
-
-type Item struct {
-    Title       string        `xml:"title"`
-    Link        string        `xml:"link"`
-    Comments    string        `xml:"comments"`
-    PubDate     Date          `xml:"pubDate"`
-    GUID        string        `xml:"guid"`
-    Category    []string      `xml:"category"`
-    Enclosure   ItemEnclosure `xml:"enclosure"`
-    Description string        `xml:"description"`
-    Content     string        `xml:"content"`
-	ReleaseNotesLink string		  `xml:"releaseNotesLink"`
-}
 
 type Date string
 
