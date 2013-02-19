@@ -33,22 +33,19 @@ func (self Date) MustFormat(format string) string {
     return s
 }
 
-func ParseContent(text []byte) (*Channel, error) {
-    var rss = rss{}
+func ParseContent(text []byte) (*RSS, error) {
+    var rss = RSS{}
     err := xml.Unmarshal(text, &rss)
     if err != nil {
         return nil, err
     }
-    return &rss.Channel, nil
+    return &rss, nil
 }
 
-func WriteFile(path string, channel * Channel) (error) {
-    var rss = rss{}
-	rss.Channel = *channel
+func WriteFile(path string, rss * RSS) (error) {
 	rss.Version = "2.0"
 	rss.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 	rss.XmlNSDC = "http://purl.org/dc/elements/1.1/"
-
     content, err := xml.Marshal(rss)
     if err != nil {
         return err
@@ -60,7 +57,7 @@ func WriteFile(path string, channel * Channel) (error) {
 	return nil
 }
 
-func ReadFile(file string) (*Channel, error) {
+func ReadFile(file string) (*RSS, error) {
     text, err := ioutil.ReadFile(file)
     if err != nil {
         return nil, err
@@ -68,7 +65,7 @@ func ReadFile(file string) (*Channel, error) {
     return ParseContent(text)
 }
 
-func ReadUrl(url string) (*Channel, error) {
+func ReadUrl(url string) (*RSS, error) {
     response, err := http.Get(url)
     if err != nil {
         return nil, err
