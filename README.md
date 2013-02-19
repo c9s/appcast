@@ -13,6 +13,11 @@ appcast -append  \
 		tests/appcast.xml
 ```
 
+To parse namespace attributes for `sparkle:`, you need a patch for encoding/xml,
+please download the patch from the below URL:
+
+	https://codereview.appspot.com/download/issue7350048_10002.diff
+
 License
 -------
 Public Domain
