@@ -15,11 +15,19 @@ func ParseContent(text []byte) (*RSS, error) {
     return &rss, nil
 }
 
+func MarshalIndent(rss * RSS) ([]byte,error) {
+    content, err := xml.MarshalIndent(rss,"","  ")
+	if err != nil {
+		return nil, err
+	}
+	return content, nil
+}
+
 func WriteFile(path string, rss * RSS) (error) {
 	rss.Version = "2.0"
 	rss.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 	rss.XmlNSDC = "http://purl.org/dc/elements/1.1/"
-    content, err := xml.Marshal(rss)
+    content, err := MarshalIndent(rss)
     if err != nil {
         return err
     }

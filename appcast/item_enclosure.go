@@ -8,8 +8,8 @@ import "os"
 type ItemEnclosure struct {
 	rss.ItemEnclosure
 	SparkleVersion			   string `xml:"sparkle:version,attr"`
-	SparkleVersionShortString  string `xml:"sparkle:versionShortString,attr"`
-	SparkleDSASignature		   string `xml:"sparkle:dsaSignature,attr"`
+	SparkleVersionShortString  string `xml:"sparkle:versionShortString,attr,omitempty"`
+	SparkleDSASignature		   string `xml:"sparkle:dsaSignature,attr,omitempty"`
 }
 
 func init() {
