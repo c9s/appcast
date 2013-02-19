@@ -33,6 +33,8 @@ func main() {
 	version     := flag.String("version"            , "", "sparkle:version (CFBundleVersion: build number)")
 	file        := flag.String("file","","application file")
 
+	doAppend    := flag.Bool("append",true,"Append Item")
+
 	// optional options
 	pubDate            := flag.String("pubDate","","pubDate")
 	versionShortString := flag.String("versionShortString" , "", "sparkle:versionShortString (Release Version)")
@@ -76,30 +78,31 @@ func main() {
 		panic( *file + " does not exist: " )
 	}
 
+	if doAppend {
+		item := appcast.Item{}
+		item.PubDate = rss.Date(*pubDate)
+		// item.PubDate = rss.Date(pubDate)
+		en , err := appcast.CreateItemEnclosureFromFile(*file)
+		if err != nil {
+			panic(err)
+		}
 
-	item := appcast.Item{}
-	item.PubDate = rss.Date(*pubDate)
-	// item.PubDate = rss.Date(pubDate)
-	en , err := appcast.CreateItemEnclosureFromFile(*file)
-	if err != nil {
-		panic(err)
-	}
+		en.URL = *url
+		en.SparkleVersion = *version
+		if *versionShortString != "" {
+			en.SparkleVersionShortString = *versionShortString
+		}
+		if *dsaSignature != "" {
+			en.SparkleDSASignature = *dsaSignature
+		}
 
-	en.URL = *url
-	en.SparkleVersion = *version
-	if *versionShortString != "" {
-		en.SparkleVersionShortString = *versionShortString
+		item.Title = *title
+		item.Description = *description
+		item.Enclosure = *en
+		apprss, err := appcast.ReadFile(appcastFile)
+		apprss.Channel.AddItem(&item)
+		appcast.WriteFile(appcastFile,apprss)
 	}
-	if *dsaSignature != "" {
-		en.SparkleDSASignature = *dsaSignature
-	}
-
-	item.Title = *title
-	item.Description = *description
-	item.Enclosure = *en
-	apprss, err := appcast.ReadFile(appcastFile)
-	apprss.Channel.AddItem(&item)
-	appcast.WriteFile(appcastFile,apprss)
 
 	_ = err
 }
