@@ -51,4 +51,3 @@ func ReadUrl(url string) (*RSS, error) {
     return ParseContent(text)
 }
 
-
