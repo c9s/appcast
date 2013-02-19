@@ -1,5 +1,4 @@
 package appcast
-// import "encoding/xml"
 import "testing"
 
 func TestItemEnclosure(t * testing.T) {

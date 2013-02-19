@@ -6,14 +6,18 @@ type ItemEnclosure struct {
     URL					string `xml:"url,attr"`
     Type				string `xml:"type,attr"`
     Length				int64 `xml:"length,attr"`
-    SparkleVersion				string `xml:"version,attr"`
-    SparkleVersionShortString  string `xml:"versionShortString,attr"`
-	SparkleDSASignature		string `xml:"dsaSignature,attr"`
 }
 
-// Return ItemEnclosure object with Type, Length
-func CreateItemEnclosureFromFile(path string) (*ItemEnclosure, error) {
-	enclosure := ItemEnclosure{}
+type SparkleItemEnclosure struct {
+	ItemEnclosure
+	SparkleVersion			   string `xml:"sparkle:version,attr"`
+	SparkleVersionShortString  string `xml:"sparkle:versionShortString,attr"`
+	SparkleDSASignature		   string `xml:"sparkle:dsaSignature,attr"`
+}
+
+// Return SparkleItemEnclosure object with Type, Length
+func CreateItemEnclosureFromFile(path string) (*SparkleItemEnclosure, error) {
+	enclosure := SparkleItemEnclosure{}
 	mimetype := mime.TypeByExtension(path)
 	enclosure.Type = mimetype
 

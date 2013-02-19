@@ -1,5 +1,6 @@
 package appcast
 
+// Item from go-rss
 type Item struct {
     Title       string        `xml:"title"`
     Link        string        `xml:"link"`
@@ -7,9 +8,9 @@ type Item struct {
     PubDate     Date          `xml:"pubDate"`
     GUID        string        `xml:"guid"`
     Category    []string      `xml:"category"`
-    Enclosure   ItemEnclosure `xml:"enclosure"`
     Description string        `xml:"description"`
     Content     string        `xml:"content"`
+    Enclosure   SparkleItemEnclosure `xml:"enclosure"`
 }
 
 type SparkleItem struct {
@@ -17,11 +18,11 @@ type SparkleItem struct {
 	SparkleReleaseNotesLink string `xml:"sparkle:releaseNotesLink"`
 }
 
-func (item * Item) SetEnclosure(enclosure * ItemEnclosure) {
+func (item * SparkleItem) SetEnclosure(enclosure * SparkleItemEnclosure) {
 	item.Enclosure = *enclosure
 }
 
-func (item * Item) AddCategory(category string) {
+func (item * SparkleItem) AddCategory(category string) {
 	item.Category = append(item.Category, category)
 }
 
