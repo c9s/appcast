@@ -78,7 +78,7 @@ func main() {
 		panic( *file + " does not exist: " )
 	}
 
-	if doAppend {
+	if *doAppend {
 		item := appcast.Item{}
 		item.PubDate = rss.Date(*pubDate)
 		// item.PubDate = rss.Date(pubDate)
