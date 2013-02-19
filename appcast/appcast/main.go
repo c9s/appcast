@@ -103,6 +103,4 @@ func main() {
 		apprss.Channel.AddItem(&item)
 		appcast.WriteFile(appcastFile,apprss)
 	}
-
-	_ = err
 }
