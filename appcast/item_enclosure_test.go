@@ -21,12 +21,5 @@ func TestItemEnclosure(t * testing.T) {
 	if en.Length == 0 {
 		t.Error("enclosure length is empty")
 	}
-
-// 	a := map[string] string {
-// 		"sparkle:version":"220",
-// 	}
-// 	_ = a
-
-
 }
 
