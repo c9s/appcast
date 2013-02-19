@@ -2,6 +2,16 @@ package appcast
 
 import "testing"
 
+func TestEmptyRSSXML(t *testing.T) {
+	rss := RSS{}
+	item := Item{}
+	rss.Channel.AddItem(&item)
+	if len(rss.Channel.Items) != 1 {
+		t.Error("AddItem failed.")
+	}
+	_ = rss
+}
+
 func TestRSSXML(t *testing.T) {
 	rss, err := ReadFile("tests/appcast.xml");
 	if err != nil {

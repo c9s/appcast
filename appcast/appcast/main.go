@@ -4,6 +4,7 @@ import "github.com/c9s/go-appcast/appcast"
 import "github.com/c9s/go-rss/rss"
 import "os"
 import "time"
+import "fmt"
 
 
 /*
@@ -99,8 +100,18 @@ func main() {
 		item.Title = *title
 		item.Description = *description
 		item.Enclosure = *en
+
+		fmt.Println("Unmarshalling...")
 		apprss, err := appcast.ReadFile(appcastFile)
+
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Adding item...")
 		apprss.Channel.AddItem(&item)
+
+		fmt.Println("Writing file...")
 		appcast.WriteFile(appcastFile,apprss)
 	}
 }
