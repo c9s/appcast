@@ -28,15 +28,16 @@ func PathExists(p string) (bool, error) {
 func main() {
 
 	// required options
-	url := *flag.String("url","","file url")
+	url         := *flag.String("url","","file url")
 	description := *flag.String("description","","description")
-	title := *flag.String("title","","title")
-	version := *flag.String("version"            , "", "sparkle:version (CFBundleVersion: build number)")
+	title       := *flag.String("title","","title")
+	version     := *flag.String("version"            , "", "sparkle:version (CFBundleVersion: build number)")
+	file        := *flag.String("file","","application file")
 
 	// optional options
-	pubDate := *flag.String("pubDate","","pubDate")
+	pubDate            := *flag.String("pubDate","","pubDate")
 	versionShortString := *flag.String("versionShortString" , "", "sparkle:versionShortString (Release Version)")
-	dsaSignature := *flag.String("dsaSignature"       , "", "sparkle:dsaSignature")
+	dsaSignature       := *flag.String("dsaSignature"       , "", "sparkle:dsaSignature")
 
 
 	if url == "" {
@@ -53,25 +54,52 @@ func main() {
 	}
 
 
-
 	if pubDate == "" {
 		pubDate = time.Now().Format(time.RFC822Z)
 	}
 
 
 	flag.Parse()
-	file := flag.Arg(0)
+	appcastFile := flag.Arg(0)
 
 	if file == "" {
+		panic("-file is required.")
+	}
+	if appcastFile == "" {
 		panic("file argument is required to create an enclosure.")
 	}
 
+	if ok, _ := PathExists(appcastFile) ; ! ok {
+		panic( appcastFile + " does not exist: " )
+	}
+
+	if ok, _ := PathExists(file) ; ! ok {
+		panic( file + " does not exist: " )
+	}
+
+
 	item := appcast.Item{}
 	item.PubDate = rss.Date(pubDate)
-
+	// item.PubDate = rss.Date(pubDate)
 	en , err := appcast.CreateItemEnclosureFromFile(file)
+	if err != nil {
+		panic(err)
+	}
 
-	_ = file
-	_ = en
+	en.SparkleVersion = version
+	if versionShortString != "" {
+		en.SparkleVersionShortString = versionShortString
+	}
+	if dsaSignature != "" {
+		en.SparkleDSASignature = dsaSignature
+	}
+
+	item.Title = title
+	item.Description = description
+	item.Enclosure = *en
+	apprss, err := appcast.ReadFile(appcastFile)
+
+	appcast.WriteFile(appcastFile,apprss)
+
 	_ = err
 }
