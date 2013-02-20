@@ -13,6 +13,7 @@ $ appcast -pubDate "Date string" \
 		-url "http://host.com/app/App.zip" \
 		-version "109" \
 		-dsaSignature "BAFJW4B6B1K1JyW30nbkBwainOzrN6EQuAh" \
+		-releaseNotesLink "...." \
 		-title "Release 1.4" \
 		path/to/app.zip
 */
@@ -40,6 +41,7 @@ func main() {
 	pubDate            := flag.String("pubDate","","pubDate")
 	versionShortString := flag.String("versionShortString" , "", "sparkle:versionShortString (Release Version)")
 	dsaSignature       := flag.String("dsaSignature"       , "", "sparkle:dsaSignature")
+	releaseNotesLink   := flag.String("releaseNotesLink","","sparkle:releaseNotesLink")
 
 	flag.Parse()
 
@@ -100,6 +102,10 @@ func main() {
 		item.Title = *title
 		item.Description = *description
 		item.Enclosure = *en
+
+		if *releaseNotesLink != "" {
+			item.SparkleReleaseNotesLink = *releaseNotesLink
+		}
 
 		fmt.Println("Unmarshalling...")
 		apprss, err := appcast.ReadFile(appcastFile)
