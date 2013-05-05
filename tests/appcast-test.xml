@@ -1,4 +1,5 @@
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" 
+	xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Your Great App&#39;s Changelog</title>
     <link>http://you.com/app/appcast.xml</link>
