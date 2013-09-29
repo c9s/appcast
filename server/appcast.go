@@ -94,6 +94,7 @@ func createReleaseTable(db *sql.DB) {
 		releaseNotesLink varchar,
 		pubDate datetime default current_timestamp,
 		filename varchar,
+		channelId int,
 		length int,
 		mimetype varchar,
 		url varchar,
