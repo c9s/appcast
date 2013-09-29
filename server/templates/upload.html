@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE HTML>
 <html>
     <head>
         <meta charset="utf-8">
     </head>
     <body>
-        <h2>Upload Page</h2>
+	<h2>Upload New Release To {{.title}}</h2>
         <div>
             <form method="post" enctype="multipart/form-data">
                 <table>
@@ -23,7 +23,7 @@
                     <tr>
                         <td>Publish Date</td>
                         <td>
-                            <input type="date" name="pubdate"/>
+                            <input type="date" name="pubDate"/>
                         </td>
                     </tr>
                     <tr>
@@ -35,9 +35,15 @@
                     <tr>
                         <td>Description</td>
                         <td>
-                            <textarea rows="5" name="desc"></textarea>
+                            <textarea rows="5" name="desc" cols="70"></textarea>
                         </td>
                     </tr>
+					<tr>
+						<td>DSA Signature</td>
+						<td> 
+							<textarea name="dsaSignature" rows="3" cols="70"></textarea>
+						</td>
+					</tr>
                 </table>
 				<button type="submit">Upload</button>
             </form>
