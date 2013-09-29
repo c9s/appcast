@@ -75,7 +75,7 @@ func ParseFile(file string) (*Appcast, error) {
 	return ParseContent(text)
 }
 
-func ParseFromUrl(url string) (*Appcast, error) {
+func ParseContentFromUrl(url string) (*Appcast, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
