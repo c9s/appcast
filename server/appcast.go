@@ -3,13 +3,16 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
 	"path"
 	"text/template"
+	"time"
 )
 import "database/sql"
 import _ "github.com/mattn/go-sqlite3"
-import _ "github.com/c9s/appcast"
+import "github.com/c9s/appcast"
+import "github.com/c9s/rss"
 import _ "github.com/c9s/appcast/server/uploader"
 import "os"
 
@@ -59,12 +62,15 @@ func ConnectDB() *sql.DB {
 		if _, err := db.Exec(`create table releases(
 			id integer auto_increment,
 			title varchar,
-			description text,
+			desc text,
+			releaseNote text,
 			pubDate datetime default current_timestamp,
+			filename varchar,
 			length int,
-			type varchar,
+			mimetype varchar,
 			url varchar,
 			version varchar,
+			shortVersion varchar,
 			dsaSignature varchar
 		);`); err != nil {
 			log.Println(err)
@@ -80,7 +86,11 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	if r.Method == "POST" {
+
 		file, fileReader, err := r.FormFile("file")
+		if err == http.ErrMissingFile {
+			log.Println("Missing file", err)
+		}
 		if err != nil {
 			log.Println("FormFile", err)
 		}
@@ -89,16 +99,49 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Println("ReadAll", err)
 		}
-		if err = ioutil.WriteFile(path.Join(UPLOAD_DIR, fileReader.Filename), data, 0777); err != nil {
+
+		dstFilePath := path.Join(UPLOAD_DIR, fileReader.Filename)
+
+		if err = ioutil.WriteFile(dstFilePath, data, 0777); err != nil {
 			log.Println(err)
 		}
+
+		/*
+			filename varchar,
+			length int,
+			mimetype varchar,
+			url varchar,
+			version varchar,
+			dsaSignature varchar
+		*/
+		stat, err := os.Stat(dstFilePath)
+		if err != nil {
+			log.Println(err)
+		}
+		length := stat.Size()
+		mimetype := mime.TypeByExtension(path.Ext(fileReader.Filename))
 
 		title := r.FormValue("title")
 		desc := r.FormValue("desc")
 		pubDate := r.FormValue("pubDate")
 		version := r.FormValue("version")
+		shortVersion := r.FormValue("shortVersion")
+		releaseNote := r.FormValue("releaseNote")
 		dsaSignature := r.FormValue("dsaSignature")
-		log.Println("New Upload", title, version, desc, pubDate, dsaSignature)
+
+		result, err := db.Exec(`INSERT INTO releases 
+			(title, desc, pubDate, version, shortVersion, releaseNote, dsaSignature, filename, length, mimetype)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			title, desc, pubDate, version, shortVersion, releaseNote, dsaSignature, fileReader.Filename, length, mimetype)
+		if err != nil {
+			panic(err)
+		}
+
+		if id, err := result.LastInsertId(); err == nil {
+			log.Println("Record created", id)
+		}
+
+		log.Println("New Release Uploaded", title, version, shortVersion, desc, pubDate, dsaSignature, length, mimetype)
 	}
 
 	templates, err := template.ParseFiles("templates/upload.html")
@@ -115,8 +158,46 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
-	// appcast := appcast.New()
-	// appcast.Write()
+	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
+
+	rows, err := db.Query(`SELECT 
+		title, desc, pubDate, version, shortVersion, filename, mimetype, length 
+		FROM releases ORDER BY pubDate DESC`)
+	if err != nil {
+		log.Fatal("Query failed:", err)
+	}
+	defer rows.Close()
+
+	appcastRss := appcast.New()
+	appcastRss.Channel.Title = channelmeta["title"].(string)
+	appcastRss.Channel.Description = channelmeta["description"].(string)
+	appcastRss.Channel.Link = channelmeta["link"].(string)
+	appcastRss.Channel.Language = channelmeta["language"].(string)
+
+	for rows.Next() {
+		var title, desc, version, shortVersion, filename, mimetype string
+		var pubDate time.Time
+		var length int64
+		err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersion, &filename, &mimetype, &length)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		var item = appcast.Item{}
+		item.Title = title
+		item.Description = desc
+		// item.PubDate = rss.Date(time.Unix(pubDate, 0).Format(time.RFC822Z))
+		item.PubDate = rss.Date(pubDate.Format(time.RFC822Z))
+		item.Enclosure.Length = length
+		item.Enclosure.Type = mimetype
+		item.Enclosure.SparkleVersion = version
+		item.Enclosure.SparkleVersionShortString = shortVersion
+		// item.ImportFile(filename)
+
+		appcastRss.Channel.AddItem(&item)
+	}
+	appcastRss.WriteTo(w)
 }
 
 func main() {
@@ -124,6 +205,8 @@ func main() {
 	defer db.Close()
 
 	http.HandleFunc("/upload", UploadPageHandler)
+	http.HandleFunc("/appcast.xml", AppcastXmlHandler)
+
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	log.Println("Listening http://localhost:8080 ...")
