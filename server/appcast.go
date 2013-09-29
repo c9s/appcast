@@ -27,12 +27,17 @@ const SQLITEDB = "appcast.db"
 var ErrFileIsRequired = errors.New("file is required.")
 var ErrReleaseInsertFailed = errors.New("release insert failed.")
 
-var channelmeta = map[string]interface{}{
-	"title":         "GoTray Appcast",
-	"link":          "http://gotray.extremedev.org/appcast.xml",
-	"description":   "Most recent changes with links to updates.",
-	"language":      "en",
-	"lastBuildDate": nil,
+var channels = map[string]appcast.Channel{
+	"gotray": appcast.Channel{
+		rss.Channel{
+			Title:         "GoTray Appcast",
+			Link:          "http://gotray.extremedev.org/appcast.xml",
+			Description:   "Most recent changes with links to updates.",
+			Language:      "en",
+			LastBuildDate: "",
+		},
+		[]appcast.Item{},
+	},
 }
 
 var db *sql.DB
@@ -55,6 +60,7 @@ func ConnectDB() *sql.DB {
 		log.Println("Initializing database schema...")
 		createAccountTable(db)
 		createReleaseTable(db)
+		createChannelTable(db)
 	}
 	return db
 }
@@ -64,6 +70,17 @@ func createAccountTable(db *sql.DB) {
 		id integer auto_increment,
 		account varchar,
 		token varchar
+	);`); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func createChannelTable(db *sql.DB) {
+	if _, err := db.Exec(`create table channels(
+		id integer auto_increment,
+		title varchar,
+		description varchar,
+		identity varchar
 	);`); err != nil {
 		log.Fatal(err)
 	}
@@ -192,7 +209,8 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	t := templates.Lookup("upload.html")
 	if t != nil {
-		err := t.Execute(w, channelmeta)
+		channel := GetChannel("gotray")
+		err := t.Execute(w, channel)
 		if err != nil {
 			panic(err)
 		}
@@ -227,6 +245,13 @@ func QueryReleases() (*sql.Rows, error) {
 		FROM releases ORDER BY pubDate DESC`)
 }
 
+func GetChannel(identity string) *appcast.Channel {
+	if channel, ok := channels[identity]; ok {
+		return &channel
+	}
+	return nil
+}
+
 func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 
@@ -236,11 +261,13 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
+	channel := GetChannel("gotray")
+
 	appcastRss := appcast.New()
-	appcastRss.Channel.Title = channelmeta["title"].(string)
-	appcastRss.Channel.Description = channelmeta["description"].(string)
-	appcastRss.Channel.Link = channelmeta["link"].(string)
-	appcastRss.Channel.Language = channelmeta["language"].(string)
+	appcastRss.Channel.Title = channel.Title
+	appcastRss.Channel.Description = channel.Description
+	appcastRss.Channel.Link = channel.Link
+	appcastRss.Channel.Language = channel.Language
 
 	for rows.Next() {
 		if item, err := ScanRowToAppcastItem(rows); err == nil {
@@ -267,7 +294,6 @@ func main() {
 	http.HandleFunc("/upload", UploadPageHandler)
 	http.HandleFunc("/=/upload", UploadReleaseHandler)
 	http.HandleFunc("/appcast.xml", AppcastXmlHandler)
-
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	log.Println("Listening http://localhost:8080 ...")
