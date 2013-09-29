@@ -110,7 +110,7 @@ func main() {
 		}
 
 		fmt.Println("Unmarshalling...")
-		apprss, err := appcast.ReadFile(appcastFile)
+		apprss, err := appcast.ParseFile(appcastFile)
 
 		if err != nil {
 			panic(err)
@@ -120,6 +120,6 @@ func main() {
 		apprss.Channel.AddItem(&item)
 
 		fmt.Println("Writing file...")
-		appcast.WriteFile(appcastFile, apprss)
+		apprss.WriteFile(appcastFile)
 	}
 }
