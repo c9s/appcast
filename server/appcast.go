@@ -1,13 +1,14 @@
 package main
 
 import (
-	// "github.com/c9s/appcast"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"path"
 	"text/template"
 )
+import _ "github.com/c9s/appcast"
+import _ "github.com/c9s/appcast/server/uploader"
 
 const UPLOAD_DIR = "uploads"
 

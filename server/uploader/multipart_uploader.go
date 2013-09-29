@@ -3,7 +3,7 @@ package uploader
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
