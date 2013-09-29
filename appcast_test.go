@@ -3,7 +3,7 @@ package appcast
 import "testing"
 
 func TestEmptyRSSXML(t *testing.T) {
-	rss := RSS{}
+	rss := Appcast{}
 	item := Item{}
 	rss.Channel.AddItem(&item)
 	if len(rss.Channel.Items) != 1 {
@@ -13,12 +13,12 @@ func TestEmptyRSSXML(t *testing.T) {
 }
 
 func TestRSSXML(t *testing.T) {
-	rss, err := ReadFile("tests/appcast.xml");
+	rss, err := ReadFile("tests/appcast.xml")
 	if err != nil {
-		t.Errorf("RSS read fail.")
+		t.Errorf("Appcast read fail.")
 	}
 	if rss == nil {
-		t.Errorf("RSS is empty.")
+		t.Errorf("Appcast is empty.")
 	}
 
 	// fmt.Printf("rss type: %T\n",rss)
@@ -28,7 +28,7 @@ func TestRSSXML(t *testing.T) {
 		t.Errorf("Items length is zero.")
 	}
 
-	for _ , item := range rss.Channel.Items {
+	for _, item := range rss.Channel.Items {
 		if len(item.Title) == 0 {
 			t.Errorf("Item Title is empty.")
 		}
@@ -47,10 +47,9 @@ func TestRSSXML(t *testing.T) {
 	}
 
 	/*
-	err = WriteFile("tests/appcast-out.xml", rss)
-	if err != nil {
-		t.Error("Can not write xml file.")
-	}
+		err = WriteFile("tests/appcast-out.xml", rss)
+		if err != nil {
+			t.Error("Can not write xml file.")
+		}
 	*/
 }
-
