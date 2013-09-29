@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -11,11 +12,14 @@ import (
 	"text/template"
 	"time"
 )
-import "database/sql"
-import _ "github.com/mattn/go-sqlite3"
-import "github.com/c9s/appcast"
-import "github.com/c9s/rss"
-import _ "github.com/c9s/appcast/server/uploader"
+
+import (
+	"github.com/c9s/appcast"
+	_ "github.com/c9s/appcast/server/uploader"
+	"github.com/c9s/jsondata"
+	"github.com/c9s/rss"
+	_ "github.com/mattn/go-sqlite3"
+)
 
 const UPLOAD_DIR = "uploads"
 const SQLITEDB = "appcast.db"
@@ -94,6 +98,16 @@ func GetFileLength(filepath string) (int64, error) {
 		return 0, err
 	}
 	return stat.Size(), nil
+}
+
+func UploadReleaseHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	item, err := CreateNewReleaseFromRequest(r)
+	if err != nil {
+		var msg = jsondata.Map{"error": err}
+		msg.WriteTo(w)
+	}
+	_ = item
 }
 
 func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
@@ -251,6 +265,7 @@ func main() {
 
 	http.HandleFunc("/download/", DownloadFileHandler)
 	http.HandleFunc("/upload", UploadPageHandler)
+	http.HandleFunc("/=/upload", UploadReleaseHandler)
 	http.HandleFunc("/appcast.xml", AppcastXmlHandler)
 
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
