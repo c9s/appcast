@@ -30,7 +30,7 @@ func (self *Appcast) MarshalIndent() ([]byte, error) {
 }
 
 /*
-Write rss content to file.
+Write appcast XML content to file.
 */
 func (self *Appcast) WriteFile(path string) error {
 	self.Version = "2.0"
@@ -57,28 +57,6 @@ func ParseContent(text []byte) (*Appcast, error) {
 		return nil, err
 	}
 	return &rss, nil
-}
-
-func MarshalIndent(appcast *Appcast) ([]byte, error) {
-	return appcast.MarshalIndent()
-}
-
-/*
-Write rss content to file.
-*/
-func WriteFile(path string, rss *Appcast) error {
-	rss.Version = "2.0"
-	rss.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
-	rss.XmlNSDC = "http://purl.org/dc/elements/1.1/"
-	content, err := MarshalIndent(rss)
-	if err != nil {
-		return err
-	}
-	err = ioutil.WriteFile(path, content, 0666)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func ReadFile(file string) (*Appcast, error) {
