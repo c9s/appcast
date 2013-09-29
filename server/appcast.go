@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/sha1"
 	"database/sql"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -87,7 +89,8 @@ func createReleaseTable(db *sql.DB) {
 		url varchar,
 		version varchar,
 		shortVersionString varchar,
-		dsaSignature varchar
+		dsaSignature varchar,
+		token varchar
 	);`); err != nil {
 		log.Fatal(err)
 	}
@@ -113,6 +116,7 @@ func UploadReleaseHandler(w http.ResponseWriter, r *http.Request) {
 		msg.WriteTo(w)
 	}
 	_ = item
+
 }
 
 func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
@@ -145,6 +149,14 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 	shortVersionString := r.FormValue("shortVersionString")
 	releaseNotesLink := r.FormValue("releaseNotesLink")
 	dsaSignature := r.FormValue("dsaSignature")
+
+	h := sha1.New()
+	h.Write([]byte(title))
+	h.Write([]byte(version))
+	h.Write([]byte(shortVersionString))
+	h.Write(data)
+	token := fmt.Sprintf("% x", h.Sum(nil))
+	_ = token
 
 	var newItem = appcast.Item{}
 	newItem.Title = title
@@ -265,6 +277,11 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	appcastRss.WriteTo(w)
 }
 
+/*
+For route: /download/gotray/{token}
+
+/download/gotray/be24d1c54d0ba415b8897b02f0c38d89
+*/
 func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.RequestURI, r.URL)
 	/*
