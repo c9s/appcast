@@ -46,19 +46,6 @@ func ConnectDB() *sql.DB {
 	if initDB {
 		log.Println("Initializing database schema...")
 
-		/*
-			<title>Version 1.4.10 (2 bugs fixed)</title>
-			<pubDate>Sun, 17 Feb 2013 21:28:09 +0800</pubDate>
-			<description>Fix auto-update</description>
-			<enclosure
-				url="http://gotray.extremedev.org/app/GoTray-1.4.10.zip"
-				type="application/octet-stream"
-				length="7292169"
-				sparkle:version="105"
-				sparkle:dsaSignature="MC0CFQCHnbi7kJ7C5wAA+QLu52NvFim4ZQIUdgxVJatWmwbWGWXrNGZJc2sDKjk=">
-			</enclosure>
-		*/
-
 		if _, err := db.Exec(`create table releases(
 			id integer auto_increment,
 			title varchar,
@@ -70,7 +57,7 @@ func ConnectDB() *sql.DB {
 			mimetype varchar,
 			url varchar,
 			version varchar,
-			shortVersion varchar,
+			shortVersionString varchar,
 			dsaSignature varchar
 		);`); err != nil {
 			log.Println(err)
@@ -125,14 +112,14 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 		desc := r.FormValue("desc")
 		pubDate := r.FormValue("pubDate")
 		version := r.FormValue("version")
-		shortVersion := r.FormValue("shortVersion")
+		shortVersionString := r.FormValue("shortVersionString")
 		releaseNote := r.FormValue("releaseNote")
 		dsaSignature := r.FormValue("dsaSignature")
 
 		result, err := db.Exec(`INSERT INTO releases 
-			(title, desc, pubDate, version, shortVersion, releaseNote, dsaSignature, filename, length, mimetype)
+			(title, desc, pubDate, version, shortVersionString, releaseNote, dsaSignature, filename, length, mimetype)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			title, desc, pubDate, version, shortVersion, releaseNote, dsaSignature, fileReader.Filename, length, mimetype)
+			title, desc, pubDate, version, shortVersionString, releaseNote, dsaSignature, fileReader.Filename, length, mimetype)
 		if err != nil {
 			panic(err)
 		}
@@ -141,7 +128,7 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("Record created", id)
 		}
 
-		log.Println("New Release Uploaded", title, version, shortVersion, desc, pubDate, dsaSignature, length, mimetype)
+		log.Println("New Release Uploaded", title, version, shortVersionString, desc, pubDate, dsaSignature, length, mimetype)
 	}
 
 	templates, err := template.ParseFiles("templates/upload.html")
@@ -161,7 +148,7 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 
 	rows, err := db.Query(`SELECT 
-		title, desc, pubDate, version, shortVersion, filename, mimetype, length, dsaSignature
+		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature
 		FROM releases ORDER BY pubDate DESC`)
 	if err != nil {
 		log.Fatal("Query failed:", err)
@@ -175,10 +162,10 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	appcastRss.Channel.Language = channelmeta["language"].(string)
 
 	for rows.Next() {
-		var title, desc, version, shortVersion, filename, mimetype, dsaSignature string
+		var title, desc, version, shortVersionString, filename, mimetype, dsaSignature string
 		var pubDate time.Time
 		var length int64
-		err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersion, &filename, &mimetype, &length, &dsaSignature)
+		err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersionString, &filename, &mimetype, &length, &dsaSignature)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -191,17 +178,27 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 		item.Enclosure.Length = length
 		item.Enclosure.Type = mimetype
 		item.Enclosure.SparkleVersion = version
-		item.Enclosure.SparkleVersionShortString = shortVersion
+		item.Enclosure.SparkleVersionShortString = shortVersionString
 		item.Enclosure.SparkleDSASignature = dsaSignature
 		appcastRss.Channel.AddItem(&item)
 	}
 	appcastRss.WriteTo(w)
 }
 
+func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method, r.RequestURI, r.URL)
+	/*
+		log.Println(r.URL.Path)
+		log.Println(r.URL.Opaque)
+		log.Println(r.URL.Fragment)
+	*/
+}
+
 func main() {
 	db = ConnectDB()
 	defer db.Close()
 
+	http.HandleFunc("/download/", DownloadFileHandler)
 	http.HandleFunc("/upload", UploadPageHandler)
 	http.HandleFunc("/appcast.xml", AppcastXmlHandler)
 
