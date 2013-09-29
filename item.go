@@ -5,10 +5,10 @@ import "github.com/c9s/rss"
 // Item from rss
 type Item struct {
 
-//	HTable string `xml:"http://www.w3.org/TR/html4/ table,attr"`
+	//	HTable string `xml:"http://www.w3.org/TR/html4/ table,attr"`
 
 	rss.Item
-    Enclosure ItemEnclosure `xml:"enclosure"`
+	Enclosure ItemEnclosure `xml:"enclosure"`
 
 	SparkleReleaseNotesLink string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle releaseNotesLink,omitempty"`
 
@@ -19,3 +19,11 @@ type Item struct {
 	SparkleMinimumSystemVersion string `xml:"http://www.andymatuschak.org/xml-namespaces/sparkle minimumSystemVersion,omitempty"`
 }
 
+func (self *Item) ImportFile(file string) error {
+	enclosure, err := CreateItemEnclosureFromFile(file)
+	if err != nil {
+		return err
+	}
+	self.Enclosure = *enclosure
+	return nil
+}
