@@ -27,19 +27,6 @@ const SQLITEDB = "appcast.db"
 var ErrFileIsRequired = errors.New("file is required.")
 var ErrReleaseInsertFailed = errors.New("release insert failed.")
 
-var channels = map[string]appcast.Channel{
-	"gotray": appcast.Channel{
-		rss.Channel{
-			Title:         "GoTray Appcast",
-			Link:          "http://gotray.extremedev.org/appcast.xml",
-			Description:   "Most recent changes with links to updates.",
-			Language:      "en",
-			LastBuildDate: "",
-		},
-		[]appcast.Item{},
-	},
-}
-
 var db *sql.DB
 
 func ConnectDB() *sql.DB {
