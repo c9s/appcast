@@ -13,7 +13,7 @@ func TestEmptyRSSXML(t *testing.T) {
 }
 
 func TestRSSXML(t *testing.T) {
-	rss, err := ReadFile("tests/appcast.xml")
+	rss, err := ParseFile("tests/appcast.xml")
 	if err != nil {
 		t.Errorf("Appcast read fail.")
 	}

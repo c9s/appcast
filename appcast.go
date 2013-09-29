@@ -67,7 +67,7 @@ func ParseContent(text []byte) (*Appcast, error) {
 	return appcast, nil
 }
 
-func ReadFile(file string) (*Appcast, error) {
+func ParseFile(file string) (*Appcast, error) {
 	text, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func ReadFile(file string) (*Appcast, error) {
 	return ParseContent(text)
 }
 
-func ReadUrl(url string) (*Appcast, error) {
+func ParseFromUrl(url string) (*Appcast, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
