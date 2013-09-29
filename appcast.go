@@ -33,15 +33,11 @@ func (self *Appcast) MarshalIndent() ([]byte, error) {
 Write appcast XML content to file.
 */
 func (self *Appcast) WriteFile(path string) error {
-	self.Version = "2.0"
-	self.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
-	self.XmlNSDC = "http://purl.org/dc/elements/1.1/"
 	content, err := self.MarshalIndent()
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(path, content, 0666)
-	if err != nil {
+	if err = ioutil.WriteFile(path, content, 0666); err != nil {
 		return err
 	}
 	return nil
@@ -53,6 +49,17 @@ func New() *Appcast {
 	appcast.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 	appcast.XmlNSDC = "http://purl.org/dc/elements/1.1/"
 	return &appcast
+}
+
+/*
+Parse appcast XML content from bytes
+*/
+func ParseContentString(text string) (*Appcast, error) {
+	var appcast = New()
+	if err := xml.Unmarshal([]byte(text), appcast); err != nil {
+		return nil, err
+	}
+	return appcast, nil
 }
 
 /*
