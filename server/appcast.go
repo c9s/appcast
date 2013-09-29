@@ -49,9 +49,20 @@ func ConnectDB() *sql.DB {
 
 	if initDB {
 		log.Println("Initializing database schema...")
+		createAccountTable(db)
 		createReleaseTable(db)
 	}
 	return db
+}
+
+func createAccountTable(db *sql.DB) {
+	if _, err := db.Exec(`create table account(
+		id integer auto_increment,
+		account varchar,
+		token varchar
+	);`); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func createReleaseTable(db *sql.DB) {
@@ -85,25 +96,24 @@ func GetFileLength(filepath string) (int64, error) {
 	return stat.Size(), nil
 }
 
-func UploadNewReleaseFromRequest(r *http.Request) error {
+func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 	file, fileReader, err := r.FormFile("file")
 	if err == http.ErrMissingFile {
-		return err
+		return nil, err
 	}
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer file.Close()
 	data, err := ioutil.ReadAll(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	dstFilePath := path.Join(UPLOAD_DIR, fileReader.Filename)
-
 	if err = ioutil.WriteFile(dstFilePath, data, 0777); err != nil {
-		return err
+		return nil, err
 	}
 
 	length, _ := GetFileLength(dstFilePath)
@@ -127,29 +137,37 @@ func UploadNewReleaseFromRequest(r *http.Request) error {
 	newItem.Enclosure.SparkleVersionShortString = shortVersionString
 	newItem.Enclosure.SparkleDSASignature = dsaSignature
 	newItem.SparkleReleaseNotesLink = releaseNotesLink
-	_ = newItem
 
 	result, err := db.Exec(`INSERT INTO releases 
 		(title, desc, pubDate, version, shortVersionString, releaseNotesLink, dsaSignature, filename, length, mimetype)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		title, desc, pubDate, version, shortVersionString, releaseNotesLink, dsaSignature, fileReader.Filename, length, mimetype)
+		title,
+		desc,
+		pubDate,
+		version,
+		shortVersionString,
+		releaseNotesLink,
+		dsaSignature,
+		fileReader.Filename,
+		length, mimetype)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if id, err := result.LastInsertId(); err == nil {
-		log.Println("Record created", id)
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
 	}
+	log.Println("Record created", id)
 
 	log.Println("New Release Uploaded", title, version, shortVersionString, desc, pubDate, dsaSignature, length, mimetype)
-	return nil
+	return &newItem, nil
 }
 
 func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
-
 	var err error
 	if r.Method == "POST" {
-		if err := UploadNewReleaseFromRequest(r); err != nil {
+		if _, err := CreateNewReleaseFromRequest(r); err != nil {
 			panic(err)
 		}
 	}
