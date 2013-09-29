@@ -161,7 +161,7 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 
 	rows, err := db.Query(`SELECT 
-		title, desc, pubDate, version, shortVersion, filename, mimetype, length 
+		title, desc, pubDate, version, shortVersion, filename, mimetype, length, dsaSignature
 		FROM releases ORDER BY pubDate DESC`)
 	if err != nil {
 		log.Fatal("Query failed:", err)
@@ -175,10 +175,10 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	appcastRss.Channel.Language = channelmeta["language"].(string)
 
 	for rows.Next() {
-		var title, desc, version, shortVersion, filename, mimetype string
+		var title, desc, version, shortVersion, filename, mimetype, dsaSignature string
 		var pubDate time.Time
 		var length int64
-		err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersion, &filename, &mimetype, &length)
+		err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersion, &filename, &mimetype, &length, &dsaSignature)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -187,14 +187,12 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 		var item = appcast.Item{}
 		item.Title = title
 		item.Description = desc
-		// item.PubDate = rss.Date(time.Unix(pubDate, 0).Format(time.RFC822Z))
 		item.PubDate = rss.Date(pubDate.Format(time.RFC822Z))
 		item.Enclosure.Length = length
 		item.Enclosure.Type = mimetype
 		item.Enclosure.SparkleVersion = version
 		item.Enclosure.SparkleVersionShortString = shortVersion
-		// item.ImportFile(filename)
-
+		item.Enclosure.SparkleDSASignature = dsaSignature
 		appcastRss.Channel.AddItem(&item)
 	}
 	appcastRss.WriteTo(w)
