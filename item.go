@@ -1,8 +1,8 @@
 package appcast
 
-import "github.com/c9s/go-rss/rss"
+import "github.com/c9s/rss"
 
-// Item from go-rss
+// Item from rss
 type Item struct {
 
 //	HTable string `xml:"http://www.w3.org/TR/html4/ table,attr"`

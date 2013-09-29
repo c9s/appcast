@@ -1,6 +1,6 @@
 package appcast
 
-import "github.com/c9s/go-rss/rss"
+import "github.com/c9s/rss"
 import "mime"
 import "path"
 import "os"

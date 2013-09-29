@@ -1,5 +1,5 @@
 package appcast
-import "github.com/c9s/go-rss/rss"
+import "github.com/c9s/rss"
 
 type Channel struct {
 	rss.Channel

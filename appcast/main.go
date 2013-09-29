@@ -1,7 +1,7 @@
 package main
 import "flag"
 import "github.com/c9s/go-appcast/appcast"
-import "github.com/c9s/go-rss/rss"
+import "github.com/c9s/rss"
 import "os"
 import "time"
 import "fmt"

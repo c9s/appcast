@@ -1,6 +1,6 @@
 package appcast
 import "encoding/xml"
-import "github.com/c9s/go-rss/rss"
+import "github.com/c9s/rss"
 
 // XXX: better solution? use lower-case, because we need to encode it with lowercase
 type RSS struct {
