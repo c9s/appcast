@@ -3,6 +3,7 @@ package appcast
 import (
 	"encoding/xml"
 	"github.com/c9s/rss"
+	"io"
 	"io/ioutil"
 	"net/http"
 )
@@ -27,6 +28,13 @@ func (self *Appcast) MarshalIndent() ([]byte, error) {
 		return nil, err
 	}
 	return content, nil
+}
+
+func (self *Appcast) WriteTo(w io.Writer) {
+	content, err := self.MarshalIndent()
+	if err == nil {
+		w.Write(content)
+	}
 }
 
 /*
