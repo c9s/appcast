@@ -47,16 +47,24 @@ func (self *Appcast) WriteFile(path string) error {
 	return nil
 }
 
+func New() *Appcast {
+	appcast := Appcast{}
+	appcast.Version = "2.0"
+	appcast.XmlNSSparkle = "http://www.andymatuschak.org/xml-namespaces/sparkle"
+	appcast.XmlNSDC = "http://purl.org/dc/elements/1.1/"
+	return &appcast
+}
+
 /*
 Parse appcast XML content from bytes
 */
 func ParseContent(text []byte) (*Appcast, error) {
-	var rss = Appcast{}
-	err := xml.Unmarshal(text, &rss)
+	var appcast = New()
+	err := xml.Unmarshal(text, appcast)
 	if err != nil {
 		return nil, err
 	}
-	return &rss, nil
+	return appcast, nil
 }
 
 func ReadFile(file string) (*Appcast, error) {
