@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"text/template"
 	"time"
 )
@@ -31,16 +32,16 @@ var ErrReleaseInsertFailed = errors.New("release insert failed.")
 
 var db *sql.DB
 
-func ConnectDB() *sql.DB {
+func ConnectDB(dbname string) *sql.DB {
 	var initDB = false
-	_, err := os.Stat(SQLITEDB)
+	_, err := os.Stat(dbname)
 	if os.IsNotExist(err) {
 		// init db
 		initDB = true
 	}
 
 	// os.Remove("./appcast.db")
-	db, err := sql.Open("sqlite3", SQLITEDB)
+	db, err := sql.Open("sqlite3", dbname)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +69,7 @@ func createChannelTable(db *sql.DB) {
 	if _, err := db.Exec(`create table channels(
 		id integer auto_increment,
 		title varchar,
-		description varchar,
+		description text,
 		identity varchar
 	);`); err != nil {
 		log.Fatal(err)
@@ -86,7 +87,6 @@ func createReleaseTable(db *sql.DB) {
 		channelId int,
 		length int,
 		mimetype varchar,
-		url varchar,
 		version varchar,
 		shortVersionString varchar,
 		dsaSignature varchar,
@@ -116,7 +116,6 @@ func UploadReleaseHandler(w http.ResponseWriter, r *http.Request) {
 		msg.WriteTo(w)
 	}
 	_ = item
-
 }
 
 func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
@@ -155,7 +154,7 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 	h.Write([]byte(version))
 	h.Write([]byte(shortVersionString))
 	h.Write(data)
-	token := fmt.Sprintf("% x", h.Sum(nil))
+	token := fmt.Sprintf("%x", h.Sum(nil))
 	_ = token
 
 	var newItem = appcast.Item{}
@@ -284,15 +283,23 @@ For route: /download/gotray/{token}
 */
 func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method, r.RequestURI, r.URL)
+	path := r.URL.Path
+
+	downloadRegExp := regexp.MustCompile("/download/([^/]+)/([^/]+)")
+	// submatches := downloadRegExp.FindAllStringSubmatch(path)
+	submatches := downloadRegExp.FindStringSubmatch(path)
+	// log.Println(submatches)
+	identity := submatches[1]
+	token := submatches[2]
+
 	/*
-		log.Println(r.URL.Path)
 		log.Println(r.URL.Opaque)
 		log.Println(r.URL.Fragment)
 	*/
 }
 
 func main() {
-	db = ConnectDB()
+	db = ConnectDB(SQLITEDB)
 	defer db.Close()
 
 	http.HandleFunc("/download/", DownloadFileHandler)
