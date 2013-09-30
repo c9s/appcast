@@ -82,7 +82,7 @@ func createReleaseTable(db *sql.DB) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title varchar,
 		desc text,
-		releaseNotes varchar,
+		releaseNotes text,
 		pubDate datetime default current_timestamp,
 		filename varchar,
 		channel varchar,
@@ -264,8 +264,8 @@ func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	appcastRss := appcast.New()
 	appcastRss.Channel.Title = channel.Title
 	appcastRss.Channel.Description = channel.Description
-	appcastRss.Channel.Link = channel.Link
-	appcastRss.Channel.Language = channel.Language
+	// appcastRss.Channel.Link = channel.Link
+	// appcastRss.Channel.Language = channel.Language
 
 	for rows.Next() {
 		if item, err := ScanRowToAppcastItem(rows); err == nil {

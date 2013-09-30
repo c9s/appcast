@@ -7,11 +7,16 @@ import (
 	"github.com/c9s/rss"
 )
 
+// Channel Record
 type Channel struct {
-	Title       string
-	Description string
-	Identity    string
+	Title       string `field:"title"`
+	Description string `field:"description"`
+	Identity    string `field:"identity"`
 	gatsby.BaseRecord
+}
+
+func (self *Channel) Init() {
+	self.BaseRecord.SetTarget(self)
 }
 
 var channels = map[string]appcast.Channel{
@@ -39,9 +44,8 @@ func CreateChannel(identity string, ch *appcast.Channel) (int64, error) {
 	return id, nil
 }
 
-func FindChannelByIdentity(identity string) *appcast.Channel {
+func FindChannelByIdentity(identity string) *Channel {
 	row := db.QueryRow(`SELECT id, title, description FROM channels WHERE identity = ?`, identity)
-
 	var id int64
 	var title, description string
 	err := row.Scan(&id, &title, &description)
@@ -50,8 +54,10 @@ func FindChannelByIdentity(identity string) *appcast.Channel {
 	} else if err != nil {
 		panic(err)
 	}
-	channel := appcast.Channel{}
-	channel.Title = title
-	channel.Description = description
+	channel := Channel{
+		Title:       title,
+		Description: description,
+		Identity:    identity,
+	}
 	return &channel
 }

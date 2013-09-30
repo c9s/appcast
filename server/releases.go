@@ -2,61 +2,45 @@ package main
 
 import (
 	"database/sql"
-	"github.com/c9s/appcast"
+	// "github.com/c9s/appcast"
 	"github.com/c9s/gatsby"
 	"time"
 )
 
 type Release struct {
-	Id                 int64     `field:"id"`
-	Title              string    `field:"title"`
-	Description        string    `field:"desc"`
-	ReleaseNotesLink   string    `field:"releaseNotesLink"`
-	PubDate            time.Time `field:"pubDate"`
-	Filename           string    `field:"filename"`
-	ChannelId          int64     `field:"channelId"`
-	Length             int64     `field:"length"`
-	Mimetype           string    `field:"mimetype"`
-	DSASignature       string    `field:"dsaSignature"`
-	Version            string    `field:"version"`
-	ShortVersionString string    `field:"shortVersionString"`
-	Token              string    `field:"token"`
+	Id                 int64      `field:"id"`
+	Title              string     `field:"title"`
+	Description        string     `field:"desc"`
+	ReleaseNotes       string     `field:"releaseNotes"`
+	PubDate            *time.Time `field:"pubDate"`
+	Filename           string     `field:"filename"`
+	Channel            string     `field:"channel"`
+	Length             int64      `field:"length"`
+	Mimetype           string     `field:"mimetype"`
+	DSASignature       string     `field:"dsaSignature"`
+	Version            string     `field:"version"`
+	ShortVersionString string     `field:"shortVersionString"`
+	Token              string     `field:"token"`
 	gatsby.BaseRecord
 }
 
-func FindReleaseByToken(token string) *appcast.Channel {
-	row := db.QueryRow(`SELECT 
-		id, 
-		title, 
-		description, 
-		version, 
-		shortVersionString, 
-		filename,
-		length,
-		mimetype
-		WHERE token = ?`, token)
+func (self *Release) Init() {
+	self.BaseRecord.SetTarget(self)
+}
 
-	var (
-		id                 int64
-		title              string
-		description        string
-		version            string
-		shortVersionString string
-		filename           string
-		length             int64
-		mimetype           string
-	)
-	err := row.Scan(&id, &title, &description, &version, &shortVersionString, &filename, &length, &mimetype)
-	if err == sql.ErrNoRows {
+func FindReleaseByToken(token string) *Release {
+	r := Release{}
+	r.Init()
+	res := r.LoadByCols(map[string]interface{}{
+		"token": token,
+	})
+	if res.IsEmpty {
 		return nil
-	} else if err != nil {
-		panic(err)
 	}
-
-	channel := appcast.Channel{}
-	channel.Title = title
-	channel.Description = description
-	return &channel
+	if res.Error != nil {
+		panic(res)
+	}
+	return &r
 }
 
 func QueryReleasesByChannel(identity string) (*sql.Rows, error) {
