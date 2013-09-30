@@ -1,7 +1,12 @@
 package main
 
-import "github.com/c9s/gatsby"
+import (
+	"database/sql"
+	"github.com/c9s/appcast"
+	"time"
+)
 
+// import "github.com/c9s/gatsby"
 type Release struct {
 	Id                 int64     `field:"id"`
 	Title              string    `field:"title"`
@@ -16,7 +21,7 @@ type Release struct {
 	Version            string    `field:"version"`
 	ShortVersionString string    `field:"shortVersionString"`
 	Token              string    `field:"token"`
-	gatsby.BaseRecord
+	// gatsby.BaseRecord
 }
 
 func FindReleaseByToken(token string) *appcast.Channel {
@@ -52,4 +57,10 @@ func FindReleaseByToken(token string) *appcast.Channel {
 	channel.Title = title
 	channel.Description = description
 	return &channel
+}
+
+func QueryReleasesByChannel(identity string) (*sql.Rows, error) {
+	return db.Query(`SELECT 
+		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature
+		FROM releases WHERE channel = ? ORDER BY pubDate DESC`, identity)
 }
