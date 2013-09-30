@@ -8,6 +8,8 @@ import (
 
 func TestChannel(t *testing.T) {
 	db = ConnectDB(":memory:")
+	gatsby.SetupConnection(db, gatsby.DriverSqlite)
+
 	ch := appcast.Channel{
 		rss.Channel{Title: "Testing", Description: "Description"},
 		[]appcast.Item{},

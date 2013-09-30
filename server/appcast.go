@@ -19,6 +19,7 @@ import (
 import (
 	"github.com/c9s/appcast"
 	_ "github.com/c9s/appcast/server/uploader"
+	"github.com/c9s/gatsby"
 	"github.com/c9s/jsondata"
 	"github.com/c9s/rss"
 	_ "github.com/mattn/go-sqlite3"
@@ -300,6 +301,7 @@ func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	db = ConnectDB(SQLITEDB)
+	gatsby.SetupConnection(db, gatsby.DriverSqlite)
 	defer db.Close()
 
 	/*
