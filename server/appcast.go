@@ -57,7 +57,7 @@ func ConnectDB(dbname string) *sql.DB {
 
 func createAccountTable(db *sql.DB) {
 	if _, err := db.Exec(`create table account(
-		id integer auto_increment,
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		account varchar,
 		token varchar
 	);`); err != nil {
@@ -67,7 +67,7 @@ func createAccountTable(db *sql.DB) {
 
 func createChannelTable(db *sql.DB) {
 	if _, err := db.Exec(`create table channels(
-		id integer auto_increment,
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title varchar,
 		description text,
 		identity varchar
@@ -78,14 +78,14 @@ func createChannelTable(db *sql.DB) {
 
 func createReleaseTable(db *sql.DB) {
 	if _, err := db.Exec(`create table releases(
-		id integer auto_increment,
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title varchar,
 		desc text,
 		releaseNotes varchar,
 		pubDate datetime default current_timestamp,
 		filename varchar,
-		channelId int,
-		length int,
+		channel varchar,
+		length integer,
 		mimetype varchar,
 		version varchar,
 		shortVersionString varchar,
@@ -189,7 +189,6 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 		return nil, err
 	}
 	log.Println("Record created", id)
-
 	log.Println("New Release Uploaded", title, version, shortVersionString, desc, pubDate, dsaSignature, length, mimetype)
 	return &newItem, nil
 }
@@ -238,12 +237,6 @@ func ScanRowToAppcastItem(rows *sql.Rows) (*appcast.Item, error) {
 	return &item, nil
 }
 
-func QueryReleases() (*sql.Rows, error) {
-	return db.Query(`SELECT 
-		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature
-		FROM releases ORDER BY pubDate DESC`)
-}
-
 func GetChannel(identity string) *appcast.Channel {
 	if channel, ok := channels[identity]; ok {
 		return &channel
@@ -254,13 +247,18 @@ func GetChannel(identity string) *appcast.Channel {
 func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 
-	rows, err := QueryReleases()
+	var channelRegExp = regexp.MustCompile("/appcast/([^/]+)(?:.xml)?")
+	var submatches = channelRegExp.FindStringSubmatch(r.URL.Path)
+	var channelIdentity = submatches[1]
+	_ = channelIdentity
+
+	rows, err := QueryReleasesByChannel(channelIdentity)
 	if err != nil {
 		log.Fatal("Query failed:", err)
 	}
 	defer rows.Close()
 
-	channel := GetChannel("gotray")
+	channel := FindChannelByIdentity(channelIdentity)
 
 	appcastRss := appcast.New()
 	appcastRss.Channel.Title = channel.Title
@@ -292,6 +290,8 @@ func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	identity := submatches[1]
 	token := submatches[2]
 
+	_ = identity
+	_ = token
 	/*
 		log.Println(r.URL.Opaque)
 		log.Println(r.URL.Fragment)
@@ -302,10 +302,16 @@ func main() {
 	db = ConnectDB(SQLITEDB)
 	defer db.Close()
 
-	http.HandleFunc("/download/", DownloadFileHandler)
-	http.HandleFunc("/upload", UploadPageHandler)
-	http.HandleFunc("/=/upload", UploadReleaseHandler)
-	http.HandleFunc("/appcast.xml", AppcastXmlHandler)
+	/*
+		/release/download/{channel identity}/{release token}/{validation token}
+		/release/upload/{channel identity}
+		/release/new/{channel identity}
+		/appcast/{channel identity}.xml
+	*/
+	http.HandleFunc("/release/download/", DownloadFileHandler)
+	http.HandleFunc("/release/upload/", UploadPageHandler)
+	http.HandleFunc("/release/new/", UploadReleaseHandler)
+	http.HandleFunc("/appcast/", AppcastXmlHandler)
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	log.Println("Listening http://localhost:8080 ...")
