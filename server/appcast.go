@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"mime"
 	"net/http"
-	"os"
 	"path"
 	"regexp"
 	"text/template"
@@ -33,18 +31,6 @@ var ErrReleaseInsertFailed = errors.New("release insert failed.")
 
 var db *sql.DB
 var templates = template.Must(template.ParseFiles("templates/upload.html"))
-
-func GetMimeTypeByFilename(filename string) string {
-	return mime.TypeByExtension(path.Ext(filename))
-}
-
-func GetFileLength(filepath string) (int64, error) {
-	stat, err := os.Stat(filepath)
-	if err != nil {
-		return 0, err
-	}
-	return stat.Size(), nil
-}
 
 func UploadReleaseHandler(w http.ResponseWriter, r *http.Request) {
 	/*
