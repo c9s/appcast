@@ -254,13 +254,6 @@ func ScanRowToAppcastItem(rows *sql.Rows) (*appcast.Item, error) {
 	return &item, nil
 }
 
-func GetChannel(identity string) *appcast.Channel {
-	if channel, ok := channels[identity]; ok {
-		return &channel
-	}
-	return nil
-}
-
 func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
 	var channelRegExp = regexp.MustCompile("/appcast/([^/]+)/([^/]+)")
 	var submatches = channelRegExp.FindStringSubmatch(r.URL.Path)
