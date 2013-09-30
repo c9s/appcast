@@ -29,8 +29,8 @@ func CreateChannel(identity string, ch *appcast.Channel) (int64, error) {
 	return id, nil
 }
 
-func FindChannel(identity string) *appcast.Channel {
-	row := db.QueryRow(`SELECT id, title, description WHERE identity = ?`, identity)
+func FindChannelByIdentity(identity string) *appcast.Channel {
+	row := db.QueryRow(`SELECT id, title, description FROM channels WHERE identity = ?`, identity)
 
 	var id int64
 	var title, description string
