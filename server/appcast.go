@@ -81,7 +81,7 @@ func createReleaseTable(db *sql.DB) {
 		id integer auto_increment,
 		title varchar,
 		desc text,
-		releaseNotesLink varchar,
+		releaseNotes varchar,
 		pubDate datetime default current_timestamp,
 		filename varchar,
 		channelId int,
@@ -146,7 +146,7 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 	pubDate := r.FormValue("pubDate")
 	version := r.FormValue("version")
 	shortVersionString := r.FormValue("shortVersionString")
-	releaseNotesLink := r.FormValue("releaseNotesLink")
+	releaseNotes := r.FormValue("releaseNotes")
 	dsaSignature := r.FormValue("dsaSignature")
 
 	h := sha1.New()
@@ -166,17 +166,17 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 	newItem.Enclosure.SparkleVersion = version
 	newItem.Enclosure.SparkleVersionShortString = shortVersionString
 	newItem.Enclosure.SparkleDSASignature = dsaSignature
-	newItem.SparkleReleaseNotesLink = releaseNotesLink
+	// newItem.SparkleReleaseNotesLink = releaseNotes
 
 	result, err := db.Exec(`INSERT INTO releases 
-		(title, desc, pubDate, version, shortVersionString, releaseNotesLink, dsaSignature, filename, length, mimetype)
+		(title, desc, pubDate, version, shortVersionString, releaseNotes, dsaSignature, filename, length, mimetype)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		title,
 		desc,
 		pubDate,
 		version,
 		shortVersionString,
-		releaseNotesLink,
+		releaseNotes,
 		dsaSignature,
 		fileReader.Filename,
 		length, mimetype)

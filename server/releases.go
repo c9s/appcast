@@ -16,6 +16,7 @@ type Release struct {
 	Version            string    `field:"version"`
 	ShortVersionString string    `field:"shortVersionString"`
 	Token              string    `field:"token"`
+	gatsby.BaseRecord
 }
 
 func FindReleaseByToken(token string) *appcast.Channel {
