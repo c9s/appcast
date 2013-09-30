@@ -116,14 +116,18 @@ func CreateNewReleaseFromRequest(r *http.Request, channelIdentity string) (*appc
 	if err != nil {
 		return nil, err
 	}
-	log.Println("Record created", id)
-	log.Println("New Release Uploaded", title, version, shortVersionString, desc, pubDate, dsaSignature, length, mimetype)
+	log.Println("New Release Uploaded", id, title, version, shortVersionString, desc, pubDate, dsaSignature, length, mimetype)
 	return &newItem, nil
 }
 
 func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 	uploadPageRegExp := regexp.MustCompile("/release/upload/([^/]+)/([^/]+)")
 	submatches := uploadPageRegExp.FindStringSubmatch(r.URL.Path)
+	if len(submatches) != 3 {
+		ForbiddenHandler(w, r)
+		return
+	}
+
 	channelIdentity := submatches[1]
 	channelToken := submatches[2]
 
@@ -171,6 +175,12 @@ func ScanRowToAppcastItem(rows *sql.Rows, channelIdentity, channelToken string) 
 	return &item, nil
 }
 
+func ForbiddenHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusForbidden)
+	w.Write([]byte("Forbidden"))
+	return
+}
+
 /*
 For route: /download/gotray/{token}
 
@@ -178,12 +188,10 @@ For route: /download/gotray/{token}
 */
 func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 	downloadRegExp := regexp.MustCompile("/release/download/([^/]+)/([^/]+)/([^/]+)")
-	// submatches := downloadRegExp.FindAllStringSubmatch(path)
 	submatches := downloadRegExp.FindStringSubmatch(r.URL.Path)
 
 	if len(submatches) != 4 {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("Forbidden"))
+		ForbiddenHandler(w, r)
 		return
 	}
 
@@ -210,10 +218,6 @@ func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("Channel not found"))
 	}
-	/*
-		log.Println(r.URL.Opaque)
-		log.Println(r.URL.Fragment)
-	*/
 }
 
 func main() {
@@ -222,8 +226,8 @@ func main() {
 	defer db.Close()
 
 	/*
-		/release/download/{channel identity}/{release token}/{validation token}
-		/release/upload/{channel identity}
+		/release/download/{channel identity}/{channel token}/{release token}
+		/release/upload/{channel identity}/{channel token}
 		/release/new/{channel identity}
 		/appcast/{channel identity}.xml
 	*/
@@ -234,7 +238,6 @@ func main() {
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
 	log.Println("Listening  " + BASEURL + " ...")
-	// http.HandleFunc("/upload", UploadNewReleaseHandler)
 	if err := http.ListenAndServe(BIND, nil); err != nil {
 		panic(err)
 	}
