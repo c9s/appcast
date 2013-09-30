@@ -43,6 +43,22 @@ func FindReleaseByToken(token string) *Release {
 	return &r
 }
 
+func FindReleaseByTokenAndChannel(token string, channel string) *Release {
+	r := Release{}
+	r.Init()
+	res := r.LoadByCols(map[string]interface{}{
+		"token":   token,
+		"channel": channel,
+	})
+	if res.IsEmpty {
+		return nil
+	}
+	if res.Error != nil {
+		panic(res)
+	}
+	return &r
+}
+
 func QueryReleasesByChannel(identity string) (*sql.Rows, error) {
 	return db.Query(`SELECT 
 		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature

@@ -14,6 +14,7 @@ func TestRelease(t *testing.T) {
 		Description: "description",
 		PubDate:     &now,
 		Token:       "s3cr3t",
+		Channel:     "testing",
 	}
 	r.Init()
 	res := r.Create()
@@ -26,5 +27,12 @@ func TestRelease(t *testing.T) {
 	if r2 == nil {
 		t.Fatal("release not found.")
 	}
+	r2.Delete()
+
+	var r3 = FindReleaseByTokenAndChannel("s3cr3t", "testing")
+	if r3 == nil {
+		t.Fatal("release not found.")
+	}
+	r3.Delete()
 
 }
