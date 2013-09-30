@@ -1,8 +1,18 @@
 package main
 
-import "github.com/c9s/appcast"
-import "github.com/c9s/rss"
-import "database/sql"
+import (
+	"database/sql"
+	"github.com/c9s/appcast"
+	"github.com/c9s/gatsby"
+	"github.com/c9s/rss"
+)
+
+type Channel struct {
+	Title       string
+	Description string
+	Identity    string
+	gatsby.BaseRecord
+}
 
 var channels = map[string]appcast.Channel{
 	"gotray": appcast.Channel{

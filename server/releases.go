@@ -3,10 +3,10 @@ package main
 import (
 	"database/sql"
 	"github.com/c9s/appcast"
+	"github.com/c9s/gatsby"
 	"time"
 )
 
-// import "github.com/c9s/gatsby"
 type Release struct {
 	Id                 int64     `field:"id"`
 	Title              string    `field:"title"`
@@ -21,7 +21,7 @@ type Release struct {
 	Version            string    `field:"version"`
 	ShortVersionString string    `field:"shortVersionString"`
 	Token              string    `field:"token"`
-	// gatsby.BaseRecord
+	gatsby.BaseRecord
 }
 
 func FindReleaseByToken(token string) *appcast.Channel {
