@@ -23,6 +23,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const BIND = ":5000"
+const BASEURL = "http://localhost:5000"
 const UPLOAD_DIR = "uploads"
 const SQLITEDB = "appcast.db"
 
@@ -81,7 +83,6 @@ func CreateNewReleaseFromRequest(r *http.Request, channelIdentity string) (*appc
 	h.Write([]byte(shortVersionString))
 	h.Write(data)
 	token := fmt.Sprintf("%x", h.Sum(nil))
-	_ = token
 
 	var newItem = appcast.Item{}
 	newItem.Title = title
@@ -95,8 +96,8 @@ func CreateNewReleaseFromRequest(r *http.Request, channelIdentity string) (*appc
 	// newItem.SparkleReleaseNotesLink = releaseNotes
 
 	result, err := db.Exec(`INSERT INTO releases 
-		(channel, title, desc, pubDate, version, shortVersionString, releaseNotes, dsaSignature, filename, length, mimetype)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		(channel, title, desc, pubDate, version, shortVersionString, releaseNotes, dsaSignature, filename, length, mimetype, token)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		channelIdentity,
 		title,
 		desc,
@@ -106,7 +107,7 @@ func CreateNewReleaseFromRequest(r *http.Request, channelIdentity string) (*appc
 		releaseNotes,
 		dsaSignature,
 		fileReader.Filename,
-		length, mimetype)
+		length, mimetype, token)
 	if err != nil {
 		return nil, err
 	}
@@ -147,11 +148,11 @@ func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ScanRowToAppcastItem(rows *sql.Rows) (*appcast.Item, error) {
-	var title, desc, version, shortVersionString, filename, mimetype, dsaSignature string
+func ScanRowToAppcastItem(rows *sql.Rows, channelIdentity, channelToken string) (*appcast.Item, error) {
+	var title, desc, version, shortVersionString, filename, mimetype, dsaSignature, token string
 	var pubDate time.Time
 	var length int64
-	var err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersionString, &filename, &mimetype, &length, &dsaSignature)
+	var err = rows.Scan(&title, &desc, &pubDate, &version, &shortVersionString, &filename, &mimetype, &length, &dsaSignature, &token)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -166,6 +167,7 @@ func ScanRowToAppcastItem(rows *sql.Rows) (*appcast.Item, error) {
 	item.Enclosure.SparkleVersion = version
 	item.Enclosure.SparkleVersionShortString = shortVersionString
 	item.Enclosure.SparkleDSASignature = dsaSignature
+	item.Enclosure.URL = BASEURL + "/release/download/" + channelIdentity + "/" + channelToken + "/" + token
 	return &item, nil
 }
 
@@ -175,18 +177,39 @@ For route: /download/gotray/{token}
 /download/gotray/be24d1c54d0ba415b8897b02f0c38d89
 */
 func DownloadFileHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method, r.RequestURI, r.URL)
-	path := r.URL.Path
-
-	downloadRegExp := regexp.MustCompile("/download/([^/]+)/([^/]+)")
+	downloadRegExp := regexp.MustCompile("/release/download/([^/]+)/([^/]+)/([^/]+)")
 	// submatches := downloadRegExp.FindAllStringSubmatch(path)
-	submatches := downloadRegExp.FindStringSubmatch(path)
-	// log.Println(submatches)
-	identity := submatches[1]
-	token := submatches[2]
+	submatches := downloadRegExp.FindStringSubmatch(r.URL.Path)
 
-	_ = identity
-	_ = token
+	if len(submatches) != 4 {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("Forbidden"))
+		return
+	}
+
+	channelIdentity := submatches[1]
+	channelToken := submatches[2]
+	releaseToken := submatches[3]
+
+	if channel := FindChannelByIdentity(channelIdentity, channelToken); channel != nil {
+		if release := LoadReleaseByChannelAndToken(channelIdentity, releaseToken); release != nil {
+			log.Println(r.URL.Path, release.Filename, release.Mimetype)
+			w.Header().Set("Content-Type", release.Mimetype)
+			w.Header().Set("Content-Disposition", "inline; filename=\""+release.Filename+"\"")
+
+			data, err := ioutil.ReadFile(path.Join(UPLOAD_DIR, release.Filename))
+			if err != nil {
+				panic(err)
+			}
+			w.Write(data)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte("Release not found"))
+		}
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Channel not found"))
+	}
 	/*
 		log.Println(r.URL.Opaque)
 		log.Println(r.URL.Fragment)
@@ -210,9 +233,9 @@ func main() {
 	http.HandleFunc("/appcast/", AppcastXmlHandler)
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
-	log.Println("Listening http://localhost:5000 ...")
+	log.Println("Listening  " + BASEURL + " ...")
 	// http.HandleFunc("/upload", UploadNewReleaseHandler)
-	if err := http.ListenAndServe(":5000", nil); err != nil {
+	if err := http.ListenAndServe(BIND, nil); err != nil {
 		panic(err)
 	}
 }

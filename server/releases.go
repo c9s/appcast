@@ -59,16 +59,21 @@ func FindReleaseByTokenAndChannel(token string, channel string) *Release {
 	return &r
 }
 
-func LoadReleasesByChannel(identity string) []Release {
-	list, err := gatsby.SelectWith(db, &Release{}, "identity = ?", identity)
-	if err != nil {
-		panic(err)
+func LoadReleaseByChannelAndToken(identity string, token string) *Release {
+	r := Release{}
+	r.Init()
+	var res = r.LoadWith("WHERE channel = ? AND token = ?", identity, token)
+	if res.IsEmpty {
+		return nil
 	}
-	return list.([]Release)
+	if res.Error != nil {
+		panic(res)
+	}
+	return &r
 }
 
 func QueryReleasesByChannel(identity string) (*sql.Rows, error) {
 	return db.Query(`SELECT 
-		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature
+		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature, token
 		FROM releases WHERE channel = ? ORDER BY pubDate DESC`, identity)
 }
