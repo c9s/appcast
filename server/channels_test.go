@@ -27,18 +27,6 @@ func TestChannel(t *testing.T) {
 	if res.Error != nil {
 		t.Fatal(res.Error)
 	}
-
-	/*
-		ch := appcast.Channel{
-			rss.Channel{Title: "Testing", Description: "Description"},
-			[]appcast.Item{},
-		}
-		id, err := CreateChannel("testing", &ch)
-		if err != nil {
-			t.Fatal(err)
-		}
-		t.Log("created channel record", id)
-	*/
 	ch2 := FindChannelByIdentity("testing")
 	if ch2 == nil {
 		t.Fatal("testing channel not found.")

@@ -2,28 +2,36 @@
 <html>
     <head>
         <meta charset="utf-8">
+		<style>
+		body, input[type="text"], textarea {
+			font-size: 18px;
+		}
+		</style>
     </head>
     <body>
-	<h2>Upload New Release To {{.title}}</h2>
+		<h1>{{.Title}}</h1>
+		<a target="_blank" href="/appcast/{{.Identity}}/{{.Token}}">appcast.xml</a>
+
+		<h2>Upload New Release</h2>
         <div>
             <form method="post" enctype="multipart/form-data">
                 <table>
                     <tr>
                         <td>Title</td>
                         <td>
-                            <input type="text" name="title"/>
+                            <input type="text" name="title" placeholder="Release Title"/>
                         </td>
                     </tr>
                     <tr>
                         <td>Version</td>
                         <td>
-                            <input type="text" name="version"/>
+                            <input type="text" name="version" placeholder="201 (BuildNumber)"/>
                         </td>
                     </tr>
                     <tr>
                         <td>ShortVersion</td>
                         <td>
-                            <input type="text" name="shortVersionString"/>
+                            <input type="text" name="shortVersionString" placeholder="1.2.0"/>
                         </td>
                     </tr>
                     <tr>
@@ -47,7 +55,7 @@
                     <tr>
                         <td>Release Note</td>
                         <td>
-							<input type="text" name="releaseNoteLink" size="60"/>
+							<textarea name="releaseNoteLink" rows="10" cols="70"></textarea>
                         </td>
                     </tr>
 					<tr>

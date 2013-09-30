@@ -20,7 +20,7 @@ import (
 	"github.com/c9s/appcast"
 	_ "github.com/c9s/appcast/server/uploader"
 	"github.com/c9s/gatsby"
-	"github.com/c9s/jsondata"
+	// "github.com/c9s/jsondata"
 	"github.com/c9s/rss"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -32,6 +32,7 @@ var ErrFileIsRequired = errors.New("file is required.")
 var ErrReleaseInsertFailed = errors.New("release insert failed.")
 
 var db *sql.DB
+var templates = template.Must(template.ParseFiles("templates/upload.html"))
 
 func ConnectDB(dbname string) *sql.DB {
 	var initDB = false
@@ -71,9 +72,16 @@ func createChannelTable(db *sql.DB) {
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		title varchar,
 		description text,
-		identity varchar
+		identity varchar,
+		token varchar
 	);`); err != nil {
 		log.Fatal(err)
+	}
+	/*
+		http://localhost:8080/appcast/gotray/4cbd040533a2f43fc6691d773d510cda70f4126a
+	*/
+	if _, err := db.Exec(`insert into channels(title,description, identity, token) values (?,?,?,?)`, "GoTray", "Desc", "gotray", "4cbd040533a2f43fc6691d773d510cda70f4126a"); err != nil {
+		panic(err)
 	}
 }
 
@@ -110,16 +118,18 @@ func GetFileLength(filepath string) (int64, error) {
 }
 
 func UploadReleaseHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	item, err := CreateNewReleaseFromRequest(r)
-	if err != nil {
-		var msg = jsondata.Map{"error": err}
-		msg.WriteTo(w)
-	}
-	_ = item
+	/*
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		item, err := CreateNewReleaseFromRequest(r)
+		if err != nil {
+			var msg = jsondata.Map{"error": err}
+			msg.WriteTo(w)
+		}
+		_ = item
+	*/
 }
 
-func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
+func CreateNewReleaseFromRequest(r *http.Request, channelIdentity string) (*appcast.Item, error) {
 	file, fileReader, err := r.FormFile("file")
 	if err == http.ErrMissingFile {
 		return nil, err
@@ -170,8 +180,9 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 	// newItem.SparkleReleaseNotesLink = releaseNotes
 
 	result, err := db.Exec(`INSERT INTO releases 
-		(title, desc, pubDate, version, shortVersionString, releaseNotes, dsaSignature, filename, length, mimetype)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		(channel, title, desc, pubDate, version, shortVersionString, releaseNotes, dsaSignature, filename, length, mimetype)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		channelIdentity,
 		title,
 		desc,
 		pubDate,
@@ -195,24 +206,29 @@ func CreateNewReleaseFromRequest(r *http.Request) (*appcast.Item, error) {
 }
 
 func UploadPageHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-	if r.Method == "POST" {
-		if _, err := CreateNewReleaseFromRequest(r); err != nil {
-			panic(err)
-		}
-	}
+	uploadPageRegExp := regexp.MustCompile("/release/upload/([^/]+)/([^/]+)")
+	submatches := uploadPageRegExp.FindStringSubmatch(r.URL.Path)
+	channelIdentity := submatches[1]
+	channelToken := submatches[2]
 
-	templates, err := template.ParseFiles("templates/upload.html")
-	if err != nil {
-		panic(err)
-	}
-	t := templates.Lookup("upload.html")
-	if t != nil {
-		channel := GetChannel("gotray")
-		err := t.Execute(w, channel)
-		if err != nil {
-			panic(err)
+	if channel := FindChannelByIdentity(channelIdentity, channelToken); channel != nil {
+		if r.Method == "POST" {
+			if _, err := CreateNewReleaseFromRequest(r, channelIdentity); err != nil {
+				panic(err)
+			}
 		}
+
+		t := templates.Lookup("upload.html")
+		if t != nil {
+			err := t.Execute(w, channel)
+			if err != nil {
+				panic(err)
+			}
+		}
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Channel not found"))
+		return
 	}
 }
 
@@ -246,33 +262,38 @@ func GetChannel(identity string) *appcast.Channel {
 }
 
 func AppcastXmlHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
-
-	var channelRegExp = regexp.MustCompile("/appcast/([^/]+)(?:.xml)?")
+	var channelRegExp = regexp.MustCompile("/appcast/([^/]+)/([^/]+)")
 	var submatches = channelRegExp.FindStringSubmatch(r.URL.Path)
 	var channelIdentity = submatches[1]
-	_ = channelIdentity
+	var channelToken = submatches[2]
 
-	rows, err := QueryReleasesByChannel(channelIdentity)
-	if err != nil {
-		log.Fatal("Query failed:", err)
-	}
-	defer rows.Close()
+	log.Println(r.URL)
 
-	channel := FindChannelByIdentity(channelIdentity)
+	if channel := FindChannelByIdentity(channelIdentity, channelToken); channel != nil {
+		w.Header().Set("Content-Type", "text/xml; charset=UTF-8")
 
-	appcastRss := appcast.New()
-	appcastRss.Channel.Title = channel.Title
-	appcastRss.Channel.Description = channel.Description
-	// appcastRss.Channel.Link = channel.Link
-	// appcastRss.Channel.Language = channel.Language
-
-	for rows.Next() {
-		if item, err := ScanRowToAppcastItem(rows); err == nil {
-			appcastRss.Channel.AddItem(item)
+		rows, err := QueryReleasesByChannel(channelIdentity)
+		if err != nil {
+			log.Fatal("Query failed:", err)
 		}
+		defer rows.Close()
+
+		appcastRss := appcast.New()
+		appcastRss.Channel.Title = channel.Title
+		appcastRss.Channel.Description = channel.Description
+		appcastRss.Channel.Link = "http://" + r.Host + "/appcast/" + channelIdentity + ".xml"
+		// appcastRss.Channel.Language = channel.Language
+
+		for rows.Next() {
+			if item, err := ScanRowToAppcastItem(rows); err == nil {
+				appcastRss.Channel.AddItem(item)
+			}
+		}
+		appcastRss.WriteTo(w)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Channel not found"))
 	}
-	appcastRss.WriteTo(w)
 }
 
 /*
@@ -316,9 +337,9 @@ func main() {
 	http.HandleFunc("/appcast/", AppcastXmlHandler)
 	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 
-	log.Println("Listening http://localhost:8080 ...")
+	log.Println("Listening http://localhost:5000 ...")
 	// http.HandleFunc("/upload", UploadNewReleaseHandler)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":5000", nil); err != nil {
 		panic(err)
 	}
 }

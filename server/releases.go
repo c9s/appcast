@@ -59,6 +59,14 @@ func FindReleaseByTokenAndChannel(token string, channel string) *Release {
 	return &r
 }
 
+func LoadReleasesByChannel(identity string) []Release {
+	list, err := gatsby.SelectWith(db, &Release{}, "identity = ?", identity)
+	if err != nil {
+		panic(err)
+	}
+	return list.([]Release)
+}
+
 func QueryReleasesByChannel(identity string) (*sql.Rows, error) {
 	return db.Query(`SELECT 
 		title, desc, pubDate, version, shortVersionString, filename, mimetype, length, dsaSignature
